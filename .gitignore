@@ -1,0 +1,25 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+
+# Environment
+.env
+.venv/
+venv/
+ENV/
+env/
+
+# Pytest cache
+.pytest_cache/
+
+# VSCode settings (optional)
+.vscode/
+
+# IDE config (PyCharm, etc.)
+.idea/
+
+# macOS hidden files
+.DS_Store
+
+# Logs
+*.log
