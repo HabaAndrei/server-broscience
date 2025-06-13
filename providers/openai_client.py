@@ -17,12 +17,11 @@ class Openai:
         count = 0
         final_result = {}
         while count <= 3 and True:
-            print(count)
             count += 1
             result = await self.generate_structure_outputs(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
-                json_schema=json_schema
+                json_schema=json_schema,
             )
             final_result = result
             if final_result.get('is_resolved') == True:
@@ -38,6 +37,7 @@ class Openai:
                     {"role": "user", "content": user_prompt},
                 ],
                 text_format=json_schema,
+                temperature=0
             )
 
             event = response.output_parsed
