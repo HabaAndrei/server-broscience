@@ -1,7 +1,7 @@
 from openai import OpenAI
 from main import get_settings
 
-
+# singleton
 class Openai:
 
     client = None
