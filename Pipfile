@@ -4,6 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+pydantic-settings = "*"
+fastapi = {extras = ["all"], version = "*"}
+openai = "*"
+pydantic = "*"
 
 [dev-packages]
 
