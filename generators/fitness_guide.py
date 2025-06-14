@@ -29,7 +29,7 @@ class FitnessGuide:
             protein: int
             carbs: int
             fats: int
-            health_score: int
+            healthScore: int
         result = await openai_client.retry_generate_schema(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
