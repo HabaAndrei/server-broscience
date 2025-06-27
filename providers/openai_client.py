@@ -51,7 +51,7 @@ class Openai:
     async def analyze_image(self, system_prompt='', user_prompt='', image='', json_schema={}):
         try:
             response = Openai.client.responses.parse(
-                model="gpt-4o-mini", # this model works top => gpt-4o, this is medium => gpt-4o-mini
+                model="gpt-4o", # this model works top => gpt-4o, this is medium => gpt-4o-mini
                 input=[
                     {"role": "system", "content": system_prompt},
                     {
