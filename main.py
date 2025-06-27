@@ -1,13 +1,13 @@
-from typing import Union
 from fastapi import FastAPI
 from generators import fitness_guide
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Union
+from providers.schemas import NutritionRequest, AnalyzeImageRequest
 
+from server.generators import food_analyzer
 
 app = FastAPI()
 fitness_guide = fitness_guide.FitnessGuide()
+food_analyzer = food_analyzer.FoodAnalyzer()
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,16 +16,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-from typing import Union
-
-class NutritionRequest(BaseModel):
-    gender: str
-    workouts: str
-    height: Union[int, str]
-    weight: Union[int, str]
-    age: Union[int, str]
-    goal: str
 
 
 @app.post("/nutrition-plan")
@@ -40,11 +30,17 @@ async def generate_nutrition_plan(data: NutritionRequest):
     )
     return result
 
+@app.post("/analyzeImage")
+async def analyze_image(data: AnalyzeImageRequest):
+    print(data.image[0: 30])
+    await food_analyzer.analyze_image(data.image)
+    return "superrr"
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
 
 @app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
+def read_item(item_id: int, q: str | None = None):
     return {"item_id": item_id, "q": q}
