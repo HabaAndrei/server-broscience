@@ -1,5 +1,6 @@
 from openai import OpenAI
 from config import get_settings
+import json
 
 # singleton
 class Openai:
@@ -42,6 +43,30 @@ class Openai:
 
             event = response.output_parsed
             return {'is_resolved': True, 'data': event}
+        except Exception as e:
+            print(e)
+            return {'is_resolved': False}
+
+
+    async def analyze_image(self, system_prompt='', user_prompt='', image='', json_schema={}):
+        try:
+            response = Openai.client.responses.parse(
+                model="gpt-4o-mini", # this model works top => gpt-4o, this is medium => gpt-4o-mini
+                input=[
+                    {"role": "system", "content": system_prompt},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "input_text", "text": user_prompt},
+                            {"type": "input_image", "image_url": image}
+                        ],
+                    }
+                ],
+                text_format=json_schema,
+                temperature=0
+            )
+            result = json.loads(response.output_text)
+            return {'is_resolved': True, 'data': result}
         except Exception as e:
             print(e)
             return {'is_resolved': False}
