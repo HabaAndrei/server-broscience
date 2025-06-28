@@ -8,8 +8,8 @@ class FoodAnalyzer:
 
     async def analyze_image(self, image:str):
         result_ingredients = await self.get_ingredients(image)
-
-        if result_ingredients.get('is_resolved') == False:
+        is_food = result_ingredients.get('data', {}).get('is_food', False)
+        if result_ingredients.get('is_resolved') == False or is_food == False:
             return result_ingredients
 
         food_ingredients = result_ingredients.get('data')

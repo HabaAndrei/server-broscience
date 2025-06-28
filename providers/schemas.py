@@ -34,6 +34,7 @@ class MealIngredients(BaseModel):
     ingredients: List[Ingredient]
     grams_quantity: int
     health_score: int
+    is_food: bool
 
 
 class IngredientDetails(BaseModel):
