@@ -45,7 +45,7 @@ class Openai:
             return {'is_resolved': True, 'data': event}
         except Exception as e:
             print(e)
-            return {'is_resolved': False}
+            return {'is_resolved': False, 'err': str(e)}
 
 
     async def analyze_image(self, system_prompt='', user_prompt='', image='', json_schema={}):
@@ -69,5 +69,5 @@ class Openai:
             return {'is_resolved': True, 'data': result}
         except Exception as e:
             print(e)
-            return {'is_resolved': False}
+            return {'is_resolved': False, 'err': str(e)}
 
