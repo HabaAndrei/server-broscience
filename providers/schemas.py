@@ -10,25 +10,16 @@ class NutritionRequest(BaseModel):
     age: int | str
     goal: str
 
+
 class AnalyzeImageRequest(BaseModel):
     image: str
+
 
 class Ingredient(BaseModel):
     name: str = Field(description="Always start with an uppercase letter.")
 
-class Meal(BaseModel):
-    name: str
-    calories: int
-    protein: int
-    carbs: int
-    fats: int
-    health_score: int
-    ingredients: List[Ingredient]
-    grams_quantity: int
-    is_food: bool
 
-
-class Ingredient(BaseModel):
+class IngredientNutrients(BaseModel):
     name: str
     calories: int
     protein: int
@@ -37,5 +28,13 @@ class Ingredient(BaseModel):
     health_score: int
     grams_quantity: int
 
-class Ingredients(BaseModel):
+
+class MealIngredients(BaseModel):
+    name: str
     ingredients: List[Ingredient]
+    grams_quantity: int
+    health_score: int
+
+
+class IngredientDetails(BaseModel):
+    ingredients: List[IngredientNutrients]
