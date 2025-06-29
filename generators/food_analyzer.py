@@ -25,6 +25,7 @@ class FoodAnalyzer:
         total_protein = sum_ingredients(details_ingredients, 'protein')
         total_carbs = sum_ingredients(details_ingredients, 'carbs')
         total_fats = sum_ingredients(details_ingredients, 'fats')
+        total_quantity = sum_ingredients(details_ingredients, 'grams_quantity')
 
         food_ingredients['ingredients'] = details_ingredients
         food_ingredients['totals'] = {
@@ -32,6 +33,7 @@ class FoodAnalyzer:
             'protein': total_protein,
             'carbs': total_carbs,
             'fats': total_fats,
+            'total_quantity': total_quantity
         }
 
         return {'is_resolved': True, 'data': food_ingredients}
