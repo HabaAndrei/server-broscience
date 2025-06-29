@@ -1,5 +1,5 @@
 from providers.openai_client import Openai
-from providers.schemas import MealIngredients, IngredientDetails
+from providers.schemas import FoodGeneralDetails, IngredientsDetails
 from utils.diverse import sum_ingredients
 
 openai_client = Openai()
@@ -7,28 +7,61 @@ openai_client = Openai()
 class FoodAnalyzer:
 
     async def analyze_image(self, image:str):
-        result_ingredients = await self.get_ingredients(image)
-        is_food = result_ingredients.get('data', {}).get('is_food', False)
-        if result_ingredients.get('is_resolved') == False or is_food == False:
-            return result_ingredients
+        result_general_details = await self.get_general_details(image)
 
-        food_ingredients = result_ingredients.get('data')
-        result_ingredient_details = await self.get_ingredient_details(image=image, ingredients=food_ingredients)
+        is_food = result_general_details.get('data', {}).get('is_food', False)
+        if result_general_details.get('is_resolved', False) == False or is_food == False:
+            return result_general_details
 
-        if result_ingredient_details.get('is_resolved') == False:
-            return result_ingredient_details
-
-        details_ingredients = result_ingredient_details.get('data').get('ingredients', [])
+        general_details = result_general_details.get('data', {})
+        ingredients = general_details.get('ingredients', {})
+        if len(ingredients) <= 0:
+            return result_general_details
 
 
-        total_calories = sum_ingredients(details_ingredients, 'calories')
-        total_protein = sum_ingredients(details_ingredients, 'protein')
-        total_carbs = sum_ingredients(details_ingredients, 'carbs')
-        total_fats = sum_ingredients(details_ingredients, 'fats')
-        total_quantity = sum_ingredients(details_ingredients, 'grams_quantity')
+        result_ingredients_details = await self.get_ingredients_details(ingredients)
+        if result_ingredients_details.get('is_resolved', False) == False:
+            return result_ingredients_details
 
-        food_ingredients['ingredients'] = details_ingredients
-        food_ingredients['totals'] = {
+        ingredients_data = result_ingredients_details.get('data')
+        ingredients_data = ingredients_data.dict()
+        ingredients_details = ingredients_data.get('ingredients')
+
+        total_calories = sum_ingredients(ingredients_details, 'calories')
+        total_protein = sum_ingredients(ingredients_details, 'protein')
+        total_carbs = sum_ingredients(ingredients_details, 'carbs')
+        total_fats = sum_ingredients(ingredients_details, 'fats')
+        total_quantity = sum_ingredients(ingredients, 'quantity')
+
+
+        print(general_details.get('ingredients'), ' <<<<<<<====== general_details.get.ingredients')
+
+        print(ingredients_details, ' <<<<<<<====== ingredients_details')
+
+
+        final_ingredients = []
+        for ingredient in  general_details.get('ingredients'):
+            ingredient_name = ingredient.get('name')
+            quantity = ingredient.get('quantity')
+            for ingredient_details in ingredients_details:
+                ingredient_detail_name = ingredient_details.get('name')
+                calories = ingredient_details.get('calories')
+                protein = ingredient_details.get('protein')
+                carbs = ingredient_details.get('carbs')
+                fats = ingredient_details.get('fats')
+
+                if ingredient_detail_name == ingredient_name:
+                    final_ingredients.append({
+                        'name': ingredient_name,
+                        'quantity': quantity,
+                        'calories': calories,
+                        'protein': protein,
+                        'carbs': carbs,
+                        'fats': fats
+                    })
+
+        general_details['ingredients'] = final_ingredients
+        general_details['totals'] = {
             'calories': total_calories,
             'protein': total_protein,
             'carbs': total_carbs,
@@ -36,47 +69,46 @@ class FoodAnalyzer:
             'total_quantity': total_quantity
         }
 
-        return {'is_resolved': True, 'data': food_ingredients}
+        return {'is_resolved': True, 'data': general_details}
 
 
-    async def get_ingredients(self, image:str):
+    async def get_general_details(self, image:str):
         result = await openai_client.analyze_image(
             system_prompt='''
-                You are an expert in food analysis. Based on the uploaded image, please provide:
-                    - The name of the food
-                    - A list of ingredients detected in the image
-                    - The quantity of the meal from the image in grams
-                    - A health score for the food (1-10)
-                Please be careful and make sure to include any ingredients that help the food cook properly (in case it is a cooked dish).
-                Such as oil, sausage, or other special ingredients that contain fats or other important elements essential to the recipe.
-                Important: If the image is not of food, please return the JSON schema with all properties set to null, except for the 'is_food' property, which should be set to false.
+                You are an expert in food analysis. Based on the uploaded image, return the structured nutritional info of the meal based on the given JSON schema.
+                For each ingredient, specify the approximate cooking method used (e.g., raw, fried, boiled). Be realistic and avoid guessing if uncertain.
+                You will provide the total quantity of the food, as well as the quantity for each individual ingredient. The sum of all ingredient quantities must equal the total quantity of the food.
+                Important: If the image does not contain food, please return the JSON schema with all properties set to null, except for the is_food property, which should be set to false.
             ''',
-            user_prompt="Here is an image of a meal. Please analyze it and provide the details from json schema",
+            user_prompt='''
+                 Here is an image of a meal. Please analyze it and provide structured data based on the given JSON schema.
+                For each ingredient, include its name, estimated quantity in grams, and the cooking method used (one of: raw, boiled, fried, baked, grilled, steamed, roasted).
+                Be as accurate as possible based on the visual cues from the image. Do not invent ingredients that are not visible.
+            ''',
             image=image,
-            json_schema=MealIngredients
+            json_schema=FoodGeneralDetails
         )
         return result
 
-    async def get_ingredient_details(self, image='', ingredients={}):
-
-        result = await openai_client.analyze_image(
+    async def get_ingredients_details(self, ingredients):
+        result_details = await openai_client.retry_generate_schema(
             system_prompt='''
-                You are an expert in food analysis.
-                You will receive an image along with details describing a food item.
-                These details include the name of the food, a list of all its ingredients, and the quantity (in grams) of the entire dish.
-                Your task is to analyze each ingredient individually. For each ingredient, you must provide:
-                    * The name of the ingredient
-                    * The estimated number of calories per image
-                    * The amount of protein (in grams) per image
-                    * The amount of carbohydrates (in grams) per image
-                    * The amount of fats (in grams) per image
-                    * The quantity of ingredient (in grams)
-                    * A health score for the ingredient (1-10)
-                Use only the ingredients provided; do not add any others.
-                When calculating the quantity for each ingredient, be careful, as you will receive only the total quantity of the entire dish.
+                You are a nutrition analysis AI. You receive a list of food ingredients, each with an approximate weight in grams.
+                For each food item, you must:
+                    1. Identify the ingredints from input
+                    2. Estimate the following nutritional values (per total given weight) for each ingredient in part:
+                        - Calories (kcal)
+                        - Protein (g)
+                        - Carbohydrates (g)
+                        - Fat (g)
+                For each ingredient, estimate the following based on the exact weight provided, using data from authoritative sources (e.g., USDA FoodData Central, EFSA, FAO/INFOODS).
+                Be precise, transparent, and rigorous. Your goal is to provide the most accurate, scientifically grounded nutritional analysis possible.
             ''',
-            user_prompt=f"Please provide details about the image, based in this details of the dish: {ingredients}",
-            image=image,
-            json_schema=IngredientDetails
+            user_prompt=f'''
+                Here is a list of food items with approximate weights: {ingredients}
+                Please provide their nutritional values in the specified JSON format.
+            ''',
+            json_schema=IngredientsDetails,
+            model='gpt-4.1'
         )
-        return result
+        return result_details
