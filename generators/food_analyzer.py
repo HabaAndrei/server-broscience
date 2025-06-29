@@ -47,6 +47,7 @@ class FoodAnalyzer:
                     - A health score for the food (1-10)
                 Please be careful and make sure to include any ingredients that help the food cook properly (in case it is a cooked dish).
                 Such as oil, sausage, or other special ingredients that contain fats or other important elements essential to the recipe.
+                Important: If the image is not of food, please return the JSON schema with all properties set to null, except for the 'is_food' property, which should be set to false.
             ''',
             user_prompt="Here is an image of a meal. Please analyze it and provide the details from json schema",
             image=image,
