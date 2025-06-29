@@ -34,6 +34,5 @@ async def generate_nutrition_plan(data: NutritionRequest):
 
 @app.post("/analyzeImage")
 async def analyze_image(data: AnalyzeImageRequest):
-    print(data.image[0: 30])
     return await food_analyzer.analyze_image(data.image)
 
