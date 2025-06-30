@@ -33,12 +33,6 @@ class FoodAnalyzer:
         total_fats = sum_ingredients(ingredients_details, 'fats')
         total_quantity = sum_ingredients(ingredients, 'quantity')
 
-
-        print(general_details.get('ingredients'), ' <<<<<<<====== general_details.get.ingredients')
-
-        print(ingredients_details, ' <<<<<<<====== ingredients_details')
-
-
         final_ingredients = []
         for ingredient in  general_details.get('ingredients'):
             ingredient_name = ingredient.get('name')
