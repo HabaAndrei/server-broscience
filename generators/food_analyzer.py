@@ -1,6 +1,7 @@
 from providers.openai_client import Openai
-from providers.schemas import FoodGeneralDetails, IngredientsDetails
-from utils.diverse import sum_ingredients
+from providers.schemas import FoodGeneralDetails, Nutrients
+import concurrent.futures
+import asyncio
 
 openai_client = Openai()
 
@@ -13,58 +14,99 @@ class FoodAnalyzer:
         if result_general_details.get('is_resolved', False) == False or is_food == False:
             return result_general_details
 
-        general_details = result_general_details.get('data', {})
-        ingredients = general_details.get('ingredients', {})
-        if len(ingredients) <= 0:
-            return result_general_details
-
+        food_name = result_general_details.get('data', {}).get('name')
+        total_quantity = result_general_details.get('data', {}).get('total_quantity')
+        health_score = result_general_details.get('data', {}).get('health_score')
+        ingredients = result_general_details.get('data').get('ingredients', {})
 
         result_ingredients_details = await self.get_ingredients_details(ingredients)
-        if result_ingredients_details.get('is_resolved', False) == False:
+
+        if result_ingredients_details.get('is_resolved') == False :
             return result_ingredients_details
+        totals = result_ingredients_details.get('data', {}).get('totals')
+        ingredients = result_ingredients_details.get('data', {}).get('ingredients')
 
-        ingredients_data = result_ingredients_details.get('data')
-        ingredients_data = ingredients_data.dict()
-        ingredients_details = ingredients_data.get('ingredients')
+        return {
+            'is_resolved': True,
+            'data': {
+                'name': food_name,
+                'total_quantity': total_quantity,
+                'ingredients': ingredients,
+                'is_food': is_food,
+                'health_score': health_score,
+                'totals': totals
+            }
+        }
 
-        total_calories = sum_ingredients(ingredients_details, 'calories')
-        total_protein = sum_ingredients(ingredients_details, 'protein')
-        total_carbs = sum_ingredients(ingredients_details, 'carbs')
-        total_fats = sum_ingredients(ingredients_details, 'fats')
-        total_quantity = sum_ingredients(ingredients, 'quantity')
 
-        final_ingredients = []
-        for ingredient in  general_details.get('ingredients'):
-            ingredient_name = ingredient.get('name')
-            quantity = ingredient.get('quantity')
-            for ingredient_details in ingredients_details:
-                ingredient_detail_name = ingredient_details.get('name')
-                calories = ingredient_details.get('calories')
-                protein = ingredient_details.get('protein')
-                carbs = ingredient_details.get('carbs')
-                fats = ingredient_details.get('fats')
 
-                if ingredient_detail_name == ingredient_name:
-                    final_ingredients.append({
-                        'name': ingredient_name,
-                        'quantity': quantity,
-                        'calories': calories,
-                        'protein': protein,
-                        'carbs': carbs,
-                        'fats': fats
-                    })
+    def find_ingredient(self, list_of_directoris, ingredient_name):
+        for directory in list_of_directoris:
+            if directory.get('name') == ingredient_name:
+                return directory
 
-        general_details['ingredients'] = final_ingredients
-        general_details['totals'] = {
+    def get_quantity_value(self, quantity=0, value_100=0):
+        one_item = value_100 / 100
+        return int(quantity * one_item)
+
+    async def get_ingredients_details(self, ingredients):
+        loop = asyncio.get_running_loop()
+        results = []
+        with concurrent.futures.ThreadPoolExecutor(10) as executor:
+            tasks = [
+                loop.run_in_executor(executor, self.get_nutrients, ingredient)
+                for ingredient in ingredients
+            ]
+            results = await asyncio.gather(*tasks)
+
+        total_calories = 0
+        total_protein = 0
+        total_carbs = 0
+        total_fats = 0
+        total_quantity = 0
+
+        ingredients_details = []
+
+        for result in results:
+            if result.get('is_resolved') == False:
+                return result
+            data_nutrients = result.get('data')
+            ingredient_name = data_nutrients.get('name')
+            general_details = self.find_ingredient(ingredients, ingredient_name)
+            quantity = general_details.get('quantity')
+            calories_per_100 = data_nutrients.get('calories')
+            protein_per_100 = data_nutrients.get('protein')
+            carbs_per_100 = data_nutrients.get('carbs')
+            fats_per_100 = data_nutrients.get('fats')
+
+            calories = self.get_quantity_value(quantity=quantity, value_100=calories_per_100)
+            protein = self.get_quantity_value(quantity=quantity, value_100=protein_per_100)
+            carbs = self.get_quantity_value(quantity=quantity, value_100=carbs_per_100)
+            fats = self.get_quantity_value(quantity=quantity, value_100=fats_per_100)
+
+            total_calories += calories
+            total_protein += protein
+            total_carbs += carbs
+            total_fats += fats
+            total_quantity += quantity
+
+            ingredients_details.append({
+                'name': ingredient_name,
+                'calories': calories,
+                'protein': protein,
+                'carbs': carbs,
+                'fats': fats,
+                'quantity': quantity
+            })
+
+        totals = {
             'calories': total_calories,
             'protein': total_protein,
             'carbs': total_carbs,
             'fats': total_fats,
             'total_quantity': total_quantity
         }
-
-        return {'is_resolved': True, 'data': general_details}
-
+        return {'is_resolved': True, 'data': {'totals': totals, 'ingredients': ingredients_details}}
 
     async def get_general_details(self, image:str):
         result = await openai_client.analyze_image(
@@ -84,25 +126,30 @@ class FoodAnalyzer:
         )
         return result
 
-    async def get_ingredients_details(self, ingredients):
-        result_details = await openai_client.retry_generate_schema(
-            system_prompt='''
-                You are a nutrition analysis AI. You receive a list of food ingredients, each with an approximate weight in grams.
-                For each food item, you must:
-                    1. Identify the ingredints from input
-                    2. Estimate the following nutritional values (per total given weight) for each ingredient in part:
-                        - Calories (kcal)
-                        - Protein (g)
-                        - Carbohydrates (g)
-                        - Fat (g)
-                For each ingredient, estimate the following based on the exact weight provided, using data from authoritative sources (e.g., USDA FoodData Central, EFSA, FAO/INFOODS).
-                Be precise, transparent, and rigorous. Your goal is to provide the most accurate, scientifically grounded nutritional analysis possible.
+
+    def get_nutrients(self, ingredient):
+        full_name = 'Name: ' + ingredient.get('name') + ', preparared: ' + ingredient.get('preparation')
+        result_details =  asyncio.run(openai_client.retry_generate_schema(
+            system_prompt = '''
+                You are a nutrition analysis expert. Your task is to return the nutrient composition for 100 grams of a given ingredient.
+                For each ingredient, you must provide values per 100 grams for:
+                    - Calories (kcal)
+                    - Protein (g)
+                    - Carbohydrates (g)
+                    - Fat (g)
+
+                For the exact weight of the ingredient provided, estimate the nutritional values using data from authoritative sources (e.g., USDA FoodData Central, EFSA, FAO/INFOODS).
+                Be precise, transparent, and rigorous. Your goal is to deliver the most accurate, scientifically grounded nutritional analysis possible.
             ''',
-            user_prompt=f'''
-                Here is a list of food items with approximate weights: {ingredients}
-                Please provide their nutritional values in the specified JSON format.
+            user_prompt = f'''
+                Here is the ingredient: {full_name}.
+                Please provide its nutritional values in the specified JSON format.
             ''',
-            json_schema=IngredientsDetails,
-            model='gpt-4.1'
-        )
-        return result_details
+            json_schema=Nutrients,
+            model='gpt-4o-mini'
+        ))
+        if result_details.get('is_resolved') == False:
+            return result_details
+        result_dict = result_details.get('data').dict()
+        result_dict['name'] = ingredient.get('name')
+        return {'is_resolved': True, 'data': result_dict}
