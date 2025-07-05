@@ -11,6 +11,7 @@ pydantic = "*"
 fuzzywuzzy = "*"
 pandas = "*"
 python-levenshtein = "*"
+meilisearch = "*"
 
 [dev-packages]
 

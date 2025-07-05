@@ -39,5 +39,5 @@ async def analyze_image(data: AnalyzeImageRequest):
     return await food_analyzer.analyze_image(data.image)
 
 @app.get("/searchFood")
-async def search_food(input: str = Query(...)):
+async def search_food(input: str):
     return search_food_instance.search(input)
