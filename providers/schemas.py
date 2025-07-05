@@ -15,6 +15,10 @@ class AnalyzeImageRequest(BaseModel):
     image: str
 
 
+class SearchFoodRequest(BaseModel):
+    input: str
+
+
 class Ingredient(BaseModel):
     name: str = Field(description="Always start with an uppercase letter.")
     quantity: int = Field(description="The quantity of the ingredient in grams.")
