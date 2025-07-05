@@ -31,19 +31,6 @@ class FoodGeneralDetails(BaseModel):
     health_score: int = Field(description="A health score for the food (1-10)")
 
 
-
-class IngredientDetails(BaseModel):
-    name: str = Field(description="Here add the name of the received ingredient. Do not change the name!")
-    calories: int
-    protein: int
-    carbs: int
-    fats: int
-
-
-class IngredientsDetails(BaseModel):
-    ingredients: List[IngredientDetails]
-
-
 class Nutrients(BaseModel):
     calories: int
     protein: int
