@@ -14,7 +14,7 @@ class Openai:
             cls._instance = super(Openai, cls).__new__(cls)
         return cls._instance
 
-    async def retry_generate_schema(self, system_prompt='', user_prompt='', json_schema={}):
+    async def retry_generate_schema(self, system_prompt='', user_prompt='', json_schema={}, model=get_settings().model_structure_outputs):
         count = 0
         final_result = {}
         while count <= 3 and True:
@@ -23,16 +23,17 @@ class Openai:
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 json_schema=json_schema,
+                model=model
             )
             final_result = result
             if final_result.get('is_resolved') == True:
                 break
         return final_result
 
-    async def generate_structure_outputs(self, system_prompt='', user_prompt='', json_schema={}):
+    async def generate_structure_outputs(self, system_prompt='', user_prompt='', json_schema={}, model=get_settings().model_structure_outputs):
         try:
             response = Openai.client.responses.parse(
-                model=get_settings().model_structure_outputs,
+                model=model,
                 input=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
