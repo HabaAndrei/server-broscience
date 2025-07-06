@@ -10,4 +10,5 @@ services:
       - .env  # Load environment variables from the .env file
     volumes:
       - .:/app  # (Optional) Mount the current directory for live code updates during development
+    restart: unless-stopped
     command: pipenv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload  # Start command
