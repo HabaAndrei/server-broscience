@@ -8,6 +8,10 @@ pydantic-settings = "*"
 fastapi = {extras = ["all"], version = "*"}
 openai = "*"
 pydantic = "*"
+fuzzywuzzy = "*"
+pandas = "*"
+python-levenshtein = "*"
+meilisearch = "*"
 
 [dev-packages]
 

@@ -1,12 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from generators import fitness_guide, food_analyzer
 from fastapi.middleware.cors import CORSMiddleware
 from providers.schemas import NutritionRequest, AnalyzeImageRequest
-
+from services import search_food_service
 
 app = FastAPI()
 fitness_guide = fitness_guide.FitnessGuide()
 food_analyzer = food_analyzer.FoodAnalyzer()
+search_food_instance = search_food_service.SearchFood()
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,3 +38,6 @@ async def generate_nutrition_plan(data: NutritionRequest):
 async def analyze_image(data: AnalyzeImageRequest):
     return await food_analyzer.analyze_image(data.image)
 
+@app.get("/searchFood")
+async def search_food(input: str):
+    return search_food_instance.search(input)
