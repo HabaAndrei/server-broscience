@@ -18,10 +18,11 @@ class SearchFood():
                 cls._choices.append(row.get('name'))
                 cls._food[row.get('name')] = {
                     'name': row.get('name'),
-                    'calories': row.get('calories'),
-                    'fats': row.get('fats'),
-                    'carbs': row.get('carbs'),
-                    'protein': row.get('protein'),
+                    'calories': int(row.get('calories')),
+                    'fats': int(row.get('fats')),
+                    'carbs': int(row.get('carbs')),
+                    'protein': int(row.get('protein')),
+                    'quantity': 100,
                 }
 
         return cls._instance
