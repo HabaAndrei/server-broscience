@@ -22,7 +22,7 @@ class SearchFood():
                     'fats': int(row.get('fats')),
                     'carbs': int(row.get('carbs')),
                     'protein': int(row.get('protein')),
-                    'quantity': 100,
+                    'quantity': int(float(row.get('quantity'))),
                 }
 
         return cls._instance
