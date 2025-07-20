@@ -3,7 +3,7 @@ import json
 import asyncio
 import concurrent.futures
 from requests.auth import HTTPBasicAuth
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from providers.firebase_client import FirestoreAdmin
 from config import get_settings
 
@@ -26,12 +26,12 @@ class FatSecretAPI:
             data = doc.to_dict()
             if data and 'access_token' in data and 'expires_at' in data:
                 expires_at = datetime.fromisoformat(data['expires_at'])
-                if expires_at > datetime.utcnow():
+                if expires_at > datetime.now(timezone.utc):
                     return data['access_token']
         return None
 
     def _store_token_in_firestore(self, token, expires_in):
-        expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
         self.db.collection(self.TOKEN_COLLECTION).document(self.TOKEN_DOC).set({
             'access_token': token,
             'expires_at': expires_at.isoformat()
