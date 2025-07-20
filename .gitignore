@@ -25,3 +25,5 @@ env/
 *.log
 
 *food.csv
+
+food_details/*.jsonl

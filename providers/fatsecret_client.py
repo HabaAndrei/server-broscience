@@ -121,7 +121,7 @@ class FatSecretAPI:
         api_url = "https://platform.fatsecret.com/rest/food-categories/v2"
         response = requests.get(api_url, headers=self._headers(), params={'language': 'en', 'format': 'json'})
         food_categories = response.json().get('food_categories', {}).get('food_category')
-        self.write_jsonl_file(food_categories, "categories.jsonl")
+        self.write_jsonl_file(food_categories, "food_details/categories.jsonl")
 
     def get_subcategory(self, id):
         api_url = "https://platform.fatsecret.com/rest/food-sub-categories/v2"
@@ -134,16 +134,16 @@ class FatSecretAPI:
 
     def get_and_write_subcategories(self):
         data = []
-        categories = self.read_file("categories.jsonl")
+        categories = self.read_file("food_details/categories.jsonl")
         for category in categories:
             id = category.get("food_category_id")
             subcategories = self.get_subcategory(id)
             data.append({'category_id': id, 'subcategories': subcategories})
-        self.write_jsonl_file(data, "subcategories.jsonl")
+        self.write_jsonl_file(data, "food_details/subcategories.jsonl")
 
     async def get_and_write_general_food_details(self):
         names = []
-        subcategories = self.read_file("subcategories.jsonl")
+        subcategories = self.read_file("food_details/subcategories.jsonl")
         for subcategory in subcategories:
             names += subcategory.get('subcategories', [])
 
@@ -161,7 +161,7 @@ class FatSecretAPI:
                 if food_id not in ids:
                     ids.append(food_id)
                     all_foods.append(food)
-            self.write_jsonl_file(all_foods, "general_food_details.jsonl")
+            self.write_jsonl_file(all_foods, "food_details/general_food_details.jsonl")
             all_foods = []
 
     def get_and_write_food(self, id):
@@ -180,11 +180,11 @@ class FatSecretAPI:
             servings = [servings]
 
         details['servings'] = servings
-        self.write_jsonl_file([details], "foods.jsonl")
+        self.write_jsonl_file([details], "food_details/foods.jsonl")
 
     async def get_and_write_detailed_foods(self):
         ids = []
-        foods = self.read_file("general_food_details.jsonl")
+        foods = self.read_file("food_details/general_food_details.jsonl")
         for food in foods:
             ids.append(food.get('food_id'))
 
