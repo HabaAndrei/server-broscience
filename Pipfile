@@ -12,6 +12,7 @@ fuzzywuzzy = "*"
 pandas = "*"
 python-levenshtein = "*"
 meilisearch = "*"
+firebase-admin = "*"
 
 [dev-packages]
 
