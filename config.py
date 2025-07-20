@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     google_service_account_client_x509_cert_url: str
     google_service_account_universe_domain: str
 
+    fatsecret_consumer_secret: str
+    fatsecret_consumer_key: str
+
     model_config = SettingsConfigDict(env_file=".env")
 
 @lru_cache
