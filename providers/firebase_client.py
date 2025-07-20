@@ -86,3 +86,15 @@ class FirestoreAdmin:
         except Exception as e:
             print(f"Failed to retrieve data: {e}")
             return None
+
+
+# firestore_admin = FirestoreAdmin()
+
+# # Insert with specific ID
+# firestore_admin.insert_data("users", {"name": "Alice", "email": "alice@example.com"}, document_id="user001")
+
+# # Insert without specific ID (Firestore auto-generates ID)
+# generated_id = firestore_admin.insert_data("users", {"name": "Bob", "email": "bob@example.com"})
+
+# # Read data
+# data = firestore_admin.get_data("users", generated_id)
