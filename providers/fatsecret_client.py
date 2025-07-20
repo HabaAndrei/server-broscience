@@ -165,7 +165,9 @@ class FatSecretAPI:
             all_foods = []
 
     def get_and_write_food(self, id):
+        print('start for id: ', id)
         food_result = self.get_food_by_id(id)
+        print('food_result => ', food_result)
         details = food_result.get('food', {})
         food_type = details.get('food_type')
         servings = details.get('servings', {}).get('serving', [])
@@ -189,7 +191,7 @@ class FatSecretAPI:
             ids.append(food.get('food_id'))
 
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor(1) as executor:
+        with concurrent.futures.ThreadPoolExecutor(2) as executor:
             tasks = [loop.run_in_executor(executor, self.get_and_write_food, id) for id in ids]
             await asyncio.gather(*tasks)
 
