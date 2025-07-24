@@ -95,3 +95,6 @@ class Meilisearch:
 # store ingredients in index
 # Meilisearch().store_ingredients()
 # python -m providers.meilisearch_client
+
+# result = Meilisearch().search("Apple")
+# print(result)
