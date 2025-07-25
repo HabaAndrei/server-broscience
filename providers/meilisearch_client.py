@@ -24,9 +24,9 @@ class Meilisearch:
         with open(path, 'r', encoding='utf-8') as f:
             return [json.loads(line) for line in f]
 
-    def store_ingredients(self):
+    def store_food(self):
         """
-        Reads ingredient names from a CSV file ('food.csv') and stores them in a Meilisearch index.
+        Reads food names from a jsonl file ('food.jsonl') and stores them in a Meilisearch index.
         If the index already exists, it deletes the existing one first to avoid duplication.
         """
         if self.exists_index(get_settings().meilisearch_index):
@@ -93,7 +93,7 @@ class Meilisearch:
 
 
 # store ingredients in index
-# Meilisearch().store_ingredients()
+# Meilisearch().store_food()
 # python -m providers.meilisearch_client
 
 # result = Meilisearch().search("Apple")
