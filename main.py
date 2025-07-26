@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI
 from generators import fitness_guide, food_analyzer
 from fastapi.middleware.cors import CORSMiddleware
 from providers.schemas import NutritionRequest, AnalyzeImageRequest

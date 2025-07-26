@@ -4,7 +4,7 @@ from typing import List, Literal
 
 class NutritionRequest(BaseModel):
     gender: str
-    workouts: str
+    workouts: str | int | float
     height: int | str
     weight: int | str
     age: int | str

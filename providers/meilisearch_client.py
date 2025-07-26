@@ -1,6 +1,6 @@
 import meilisearch
 from config import get_settings
-import pandas as pd
+import json
 
 # A singleton class that wraps Meilisearch functionality
 class Meilisearch:
@@ -20,9 +20,13 @@ class Meilisearch:
             cls._client = meilisearch.Client(get_settings().meilisearch_url, get_settings().meilisearch_password)
         return cls._instance
 
-    def store_ingredients_names(self):
+    def read_jsonl_file(self, path):
+        with open(path, 'r', encoding='utf-8') as f:
+            return [json.loads(line) for line in f]
+
+    def store_food(self):
         """
-        Reads ingredient names from a CSV file ('food.csv') and stores them in a Meilisearch index.
+        Reads food names from a jsonl file ('food.jsonl') and stores them in a Meilisearch index.
         If the index already exists, it deletes the existing one first to avoid duplication.
         """
         if self.exists_index(get_settings().meilisearch_index):
@@ -30,14 +34,20 @@ class Meilisearch:
             self.delete_index(get_settings().meilisearch_index)
 
         data_to_store = []
-        df = pd.read_csv('food.csv')
+        rows = self.read_jsonl_file("food_details/foods.jsonl")
 
-        # Iterate over each row and extract the 'name' column
-        for ix, row in df.iterrows():
-            name = row.get('name')
-            # Add a dictionary containing only the ID and name
-            data_to_store.append({'id': ix, 'name': name})
-
+        for row in rows:
+            food_type = row.get('food_type')
+            food_id = row.get('food_id')
+            food_name = row.get('food_name')
+            if food_type == 'Brand':
+                data_to_store.append({
+                    'id': food_id,
+                    'name': food_name,
+                    'brand_name': row.get('brand_name', '')
+                })
+                continue
+            data_to_store.append({'id': food_id, 'name': food_name})
         # Add the list of ingredients to the Meilisearch index
         return Meilisearch._client.index(get_settings().meilisearch_index).add_documents(data_to_store)
 
@@ -83,5 +93,8 @@ class Meilisearch:
 
 
 # store ingredients in index
-# Meilisearch().store_ingredients_names()
+# Meilisearch().store_food()
 # python -m providers.meilisearch_client
+
+# result = Meilisearch().search("Apple")
+# print(result)
