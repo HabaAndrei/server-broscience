@@ -34,5 +34,5 @@ class FoodGeneralDetails(BaseModel):
 class Nutrients(BaseModel):
     calories: int
     protein: int
-    carbs: int
-    fats: int
+    carbohydrate: int
+    fat: int

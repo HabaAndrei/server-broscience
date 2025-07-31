@@ -86,20 +86,20 @@ class FoodAnalyzer:
             quantity = general_details.get('quantity')
             calories_per_100 = data_nutrients.get('calories')
             protein_per_100 = data_nutrients.get('protein')
-            carbs_per_100 = data_nutrients.get('carbs')
-            fats_per_100 = data_nutrients.get('fats')
+            carbs_per_100 = data_nutrients.get('carbohydrate')
+            fats_per_100 = data_nutrients.get('fat')
 
             # Calculate nutrient values for the specific quantity
             calories = self.get_quantity_value(quantity=quantity, value_100=calories_per_100)
             protein = self.get_quantity_value(quantity=quantity, value_100=protein_per_100)
-            carbs = self.get_quantity_value(quantity=quantity, value_100=carbs_per_100)
-            fats = self.get_quantity_value(quantity=quantity, value_100=fats_per_100)
+            carbohydrate = self.get_quantity_value(quantity=quantity, value_100=carbs_per_100)
+            fat = self.get_quantity_value(quantity=quantity, value_100=fats_per_100)
 
             # Update the total values
             total_calories += calories
             total_protein += protein
-            total_carbs += carbs
-            total_fats += fats
+            total_carbs += carbohydrate
+            total_fats += fat
             total_quantity += quantity
 
             # Add ingredient details to the list
@@ -107,16 +107,16 @@ class FoodAnalyzer:
                 'name': ingredient_name,
                 'calories': calories,
                 'protein': protein,
-                'carbs': carbs,
-                'fats': fats,
+                'carbohydrate': carbohydrate,
+                'fat': fat,
                 'quantity': quantity
             })
 
         totals = {
             'calories': total_calories,
             'protein': total_protein,
-            'carbs': total_carbs,
-            'fats': total_fats,
+            'carbohydrate': total_carbs,
+            'fat': total_fats,
             'total_quantity': total_quantity
         }
         return {'is_resolved': True, 'data': {'totals': totals, 'ingredients': ingredients_details}}

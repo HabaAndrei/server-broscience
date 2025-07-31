@@ -9,7 +9,7 @@ class FitnessGuide:
         system_prompt = ('''
             You are a nutritionist and fitness expert.
             Based on the user's profile and goals, generate a personalized daily nutrition plan.
-            The plan should include the total number of calories, grams of protein, carbs, fats, and a health score
+            The plan should include the total number of calories, grams of protein, carbohydrate, fat, and a health score
             rating from 1 to 10 indicating how balanced and healthy the plan is.
         ''')
 
@@ -21,14 +21,14 @@ class FitnessGuide:
                 - Weight (kg): {weight}
                 - Age: {age}
                 - Goal: {goal}
-            Please generate a daily nutrition plan following the format: calories, protein, carbs, fats, health_score.
+            Please generate a daily nutrition plan following the format: calories, protein, carbohydrate, fat, health_score.
         ''')
 
         class Plan(BaseModel):
             calories: int
             protein: int
-            carbs: int
-            fats: int
+            carbohydrate: int
+            fat: int
             healthScore: int
         result = await openai_client.retry_generate_schema(
             system_prompt=system_prompt,
