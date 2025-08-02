@@ -24,17 +24,13 @@ class FatSecretAPI:
         doc = doc_ref.get()
         if doc.exists:
             data = doc.to_dict()
-            if data and 'access_token' in data and 'expires_at' in data:
-                expires_at = datetime.fromisoformat(data['expires_at'])
-                if expires_at > datetime.now(timezone.utc):
-                    return data['access_token']
+            if data and 'access_token' in data:
+                return data['access_token']
         return None
 
-    def _store_token_in_firestore(self, token, expires_in):
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+    def _store_token_in_firestore(self, token):
         self.db.collection(self.TOKEN_COLLECTION).document(self.TOKEN_DOC).set({
             'access_token': token,
-            'expires_at': expires_at.isoformat()
         })
 
     def _fetch_new_token(self):
@@ -51,8 +47,7 @@ class FatSecretAPI:
         if response.status_code == 200:
             body = response.json()
             token = body.get('access_token')
-            expires_in = body.get('expires_in', 86400)  # Default 24h
-            self._store_token_in_firestore(token, expires_in)
+            self._store_token_in_firestore(token)
             return token
         else:
             raise Exception(f"Failed to fetch token: {response.text}")
@@ -62,8 +57,29 @@ class FatSecretAPI:
             token = self._get_token_from_firestore()
             if not token:
                 token = self._fetch_new_token()
+            else:
+                # verify if the token is still available or si expired
+                repsonse_test = self.test_request(token)
+                code = repsonse_test.get('error', {}).get('code')
+                # if code is 13, the token is expired
+                if code == 13:
+                    # create and store new token
+                    token = self._fetch_new_token()
             self.access_token = token
         return self.access_token
+
+    def test_request(self, token):
+        '''
+            This function is making just request just to see the result.
+            This helps as to verify if the token is still available or not
+        '''
+        api_url = "https://platform.fatsecret.com/rest/food-categories/v2"
+        response = requests.get(
+            api_url,
+            headers={'Authorization': f'Bearer {token}'},
+            params={'language': 'en', 'format': 'json'}
+        )
+        return response.json()
 
     def _headers(self):
         return {'Authorization': f'Bearer {self.get_token()}'}
