@@ -11,6 +11,7 @@ from config import get_settings
 class FatSecretAPI:
     TOKEN_COLLECTION = "fatsecret_tokens"
     TOKEN_DOC = "access_token"
+    recipe_types = ['Appetizer', 'Soup', 'Main Dish', 'Side Dish', 'Baked', 'Salad and Salad Dressing', 'Sauce and Condiment', 'Dessert', 'Snack', 'Beverage', 'Other', 'Breakfast', 'Lunch']
 
     def __init__(self):
         settings = get_settings()
@@ -211,6 +212,35 @@ class FatSecretAPI:
             tasks = [loop.run_in_executor(executor, self.get_and_write_food, id) for id in ids]
             await asyncio.gather(*tasks)
 
+    def get_recipe_types(self):
+        api_url = "https://platform.fatsecret.com/rest/recipe-types/v2"
+        response = requests.get(api_url, headers=self._headers(), params={'language': 'en', 'format': 'json'})
+        recipe_types = response.json().get('recipe_types', {}).get('recipe_type', [])
+        return recipe_types
+
+    def search_recipes(self, input_):
+        all_recipes = []
+        api_url = "https://platform.fatsecret.com/rest/recipes/search/v3"
+        is_recipe = True
+        page = 0
+
+        while is_recipe:
+            response = requests.get(api_url, headers=self._headers(), params={
+                'search_expression': input_,
+                'must_have_images': True,
+                'page_number': page,
+                'max_results': 50,
+                'sort_by': 'oldest',
+                'format': 'json',
+            })
+            recipes = response.json().get('recipes', {}).get('recipe', [])
+            if recipes:
+                all_recipes += recipes
+                page += 1
+            else:
+                is_recipe = False
+
+        return all_recipes
 
 # api = FatSecretAPI()
 
