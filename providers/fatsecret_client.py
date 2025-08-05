@@ -242,7 +242,48 @@ class FatSecretAPI:
 
         return all_recipes
 
+    def get_and_write_general_recipe_details(self):
+
+        foods = self.read_file("food_details/foods.jsonl")
+        food_names = []
+        # get only food name that is 'Generic' by id
+        for food in foods:
+            food_type = food.get('food_type', '')
+            food_name = food.get('food_name', '')
+            if food_type == 'Generic' and food_name:
+                food_names.append(food_name)
+
+        ids = []
+        for name in food_names:
+            # get recipes based on food name
+            recipes = self.search_recipes(name)
+            print("we are at: ", name)
+            print("we have recipes: ", len(recipes))
+            recipes_to_store = []
+            for recipe in recipes:
+                recipe_id = recipe.get('recipe_id', None)
+
+                # if the id is already in variable, skip the step
+                if recipe_id in ids:
+                    continue
+
+                recipes_to_store.append(recipe)
+                ids.append(recipe_id)
+
+            # store uinque recipes in file for each food name
+            if len(recipes_to_store):
+                self.write_jsonl_file(recipes_to_store, "food_details/general_details_recipes.jsonl")
+
+
 # api = FatSecretAPI()
+
+
+# !! Get recepies steps
+
+# Get recipes general details (Step 1)
+# api.get_and_write_general_recipe_details()
+
+# !! Get foods steps
 
 # Get categories (Step 1)
 # api.get_and_write_categories()
