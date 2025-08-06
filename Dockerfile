@@ -17,5 +17,8 @@ COPY . .
 # Expose the port your FastAPI app will run on
 EXPOSE 8000
 
+# This will show the logs
+ENV PYTHONUNBUFFERED=1
+
 # Start the FastAPI app using uvicorn, through pipenv
 CMD ["pipenv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
