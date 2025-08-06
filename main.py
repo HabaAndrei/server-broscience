@@ -34,10 +34,10 @@ async def generate_nutrition_plan(data: NutritionRequest):
     )
     return result
 
-@app.post("/analyzeImage")
+@app.post("/analyze-image")
 async def analyze_image(data: AnalyzeImageRequest):
     return await food_analyzer.analyze_image(data.image)
 
-@app.get("/searchFood")
+@app.get("/search-food")
 async def search_food(input: str):
     return search_food_instance.search(input)
