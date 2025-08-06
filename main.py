@@ -2,12 +2,14 @@ from fastapi import FastAPI
 from generators import fitness_guide, food_analyzer
 from fastapi.middleware.cors import CORSMiddleware
 from providers.schemas import NutritionRequest, AnalyzeImageRequest
+from providers.fatsecret_client import FatSecretAPI
 from services import search_food_service
 
 app = FastAPI()
 fitness_guide = fitness_guide.FitnessGuide()
 food_analyzer = food_analyzer.FoodAnalyzer()
 search_food_instance = search_food_service.SearchFood()
+fat_secret_client = FatSecretAPI()
 
 
 app.add_middleware(
