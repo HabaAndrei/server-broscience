@@ -6,6 +6,7 @@ from requests.auth import HTTPBasicAuth
 from datetime import datetime, timedelta, timezone
 from providers.firebase_client import FirestoreAdmin
 from config import get_settings
+import time
 
 
 class FatSecretAPI:
@@ -225,22 +226,29 @@ class FatSecretAPI:
         page = 0
 
         while is_recipe:
-            response = requests.get(api_url, headers=self._headers(), params={
-                'search_expression': input_,
-                'must_have_images': True,
-                'page_number': page,
-                'max_results': 50,
-                'sort_by': 'oldest',
-                'format': 'json',
-            })
-            recipes = response.json().get('recipes', {}).get('recipe', [])
-            if recipes:
-                all_recipes += recipes
-                page += 1
-            else:
-                is_recipe = False
+            try:
+                response = requests.get(api_url, headers=self._headers(), params={
+                    'search_expression': input_,
+                    'must_have_images': True,
+                    'page_number': page,
+                    'max_results': 50,
+                    'sort_by': 'oldest',
+                    'format': 'json',
+                })
+                recipes = response.json().get('recipes', {}).get('recipe', [])
+                is_error = response.json().get('error', None)
+                if is_error:
+                    print(response.json())
+                    return {'is_resolved': False}
+                if recipes:
+                    all_recipes += recipes
+                    page += 1
+                else:
+                    is_recipe = False
+            except:
+                print("searching recipes failed")
 
-        return all_recipes
+        return {'is_resolved': True, 'data': all_recipes}
 
     def get_and_write_general_recipe_details(self):
 
@@ -255,20 +263,33 @@ class FatSecretAPI:
 
         ids = []
         for name in food_names:
-            # get recipes based on food name
-            recipes = self.search_recipes(name)
-            print("we are at: ", name)
-            print("we have recipes: ", len(recipes))
-            recipes_to_store = []
-            for recipe in recipes:
-                recipe_id = recipe.get('recipe_id', None)
-
-                # if the id is already in variable, skip the step
-                if recipe_id in ids:
+            is_resolved = False
+            while is_resolved == False:
+                print("we are at: ", name)
+                recipes_response = self.search_recipes(name)
+                if recipes_response.get('is_resolved') == True:
+                    is_resolved = True
+                else:
+                    time.sleep(10)
                     continue
 
-                recipes_to_store.append(recipe)
-                ids.append(recipe_id)
+                recipes = recipes_response.get('data')
+
+                print("we have recipes: ", len(recipes))
+                if len(recipes):
+                    print("first recipe: ", recipes[0])
+                else:
+                    print("we dont have recipes !!!!! ")
+                recipes_to_store = []
+                for recipe in recipes:
+                    recipe_id = recipe.get('recipe_id', None)
+
+                    # if the id is already in variable, skip the step
+                    if recipe_id in ids:
+                        continue
+
+                    recipes_to_store.append(recipe)
+                    ids.append(recipe_id)
 
             # store uinque recipes in file for each food name
             if len(recipes_to_store):
