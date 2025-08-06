@@ -270,7 +270,7 @@ class FatSecretAPI:
                 if recipes_response.get('is_resolved') == True:
                     is_resolved = True
                 else:
-                    time.sleep(10)
+                    time.sleep(120)
                     continue
 
                 recipes = recipes_response.get('data')
