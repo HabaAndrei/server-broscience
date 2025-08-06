@@ -237,6 +237,11 @@ class FatSecretAPI:
                 })
                 recipes = response.json().get('recipes', {}).get('recipe', [])
                 is_error = response.json().get('error', None)
+                code = response.json().get('error', {}).get('code', 0)
+                # if the token is expired create new token
+                if code == 13:
+                    self.get_token()
+
                 if is_error:
                     print(response.json())
                     return {'is_resolved': False}
