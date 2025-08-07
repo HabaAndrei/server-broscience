@@ -3,7 +3,6 @@ import json
 import asyncio
 import concurrent.futures
 from requests.auth import HTTPBasicAuth
-from datetime import datetime, timedelta, timezone
 from providers.firebase_client import FirestoreAdmin
 from config import get_settings
 import time
@@ -55,19 +54,21 @@ class FatSecretAPI:
             raise Exception(f"Failed to fetch token: {response.text}")
 
     def get_token(self):
+        def is_token_expired(token):
+            response_test = self.test_request(token)
+            if not response_test:
+                return True
+            return response_test.get('error', {}).get('code') == 13
+
         if not self.access_token:
             token = self._get_token_from_firestore()
-            if not token:
+            if not token or is_token_expired(token):
                 token = self._fetch_new_token()
-            else:
-                # verify if the token is still available or si expired
-                repsonse_test = self.test_request(token)
-                code = repsonse_test.get('error', {}).get('code')
-                # if code is 13, the token is expired
-                if code == 13:
-                    # create and store new token
-                    token = self._fetch_new_token()
             self.access_token = token
+        else:
+            if is_token_expired(self.access_token):
+                self.access_token = self._fetch_new_token()
+
         return self.access_token
 
     def test_request(self, token):
