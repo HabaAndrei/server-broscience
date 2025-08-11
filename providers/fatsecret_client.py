@@ -3,14 +3,15 @@ import json
 import asyncio
 import concurrent.futures
 from requests.auth import HTTPBasicAuth
-from datetime import datetime, timedelta, timezone
 from providers.firebase_client import FirestoreAdmin
 from config import get_settings
+import time
 
 
 class FatSecretAPI:
     TOKEN_COLLECTION = "fatsecret_tokens"
     TOKEN_DOC = "access_token"
+    recipe_types = ['Appetizer', 'Soup', 'Main Dish', 'Side Dish', 'Baked', 'Salad and Salad Dressing', 'Sauce and Condiment', 'Dessert', 'Snack', 'Beverage', 'Other', 'Breakfast', 'Lunch']
 
     def __init__(self):
         settings = get_settings()
@@ -24,17 +25,13 @@ class FatSecretAPI:
         doc = doc_ref.get()
         if doc.exists:
             data = doc.to_dict()
-            if data and 'access_token' in data and 'expires_at' in data:
-                expires_at = datetime.fromisoformat(data['expires_at'])
-                if expires_at > datetime.now(timezone.utc):
-                    return data['access_token']
+            if data and 'access_token' in data:
+                return data['access_token']
         return None
 
-    def _store_token_in_firestore(self, token, expires_in):
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+    def _store_token_in_firestore(self, token):
         self.db.collection(self.TOKEN_COLLECTION).document(self.TOKEN_DOC).set({
             'access_token': token,
-            'expires_at': expires_at.isoformat()
         })
 
     def _fetch_new_token(self):
@@ -51,19 +48,41 @@ class FatSecretAPI:
         if response.status_code == 200:
             body = response.json()
             token = body.get('access_token')
-            expires_in = body.get('expires_in', 86400)  # Default 24h
-            self._store_token_in_firestore(token, expires_in)
+            self._store_token_in_firestore(token)
             return token
         else:
             raise Exception(f"Failed to fetch token: {response.text}")
 
     def get_token(self):
+        def is_token_expired(token):
+            response_test = self.test_request(token)
+            if not response_test:
+                return True
+            return response_test.get('error', {}).get('code') == 13
+
         if not self.access_token:
             token = self._get_token_from_firestore()
-            if not token:
+            if not token or is_token_expired(token):
                 token = self._fetch_new_token()
             self.access_token = token
+        else:
+            if is_token_expired(self.access_token):
+                self.access_token = self._fetch_new_token()
+
         return self.access_token
+
+    def test_request(self, token):
+        '''
+            This function is making just request just to see the result.
+            This helps as to verify if the token is still available or not
+        '''
+        api_url = "https://platform.fatsecret.com/rest/food-categories/v2"
+        response = requests.get(
+            api_url,
+            headers={'Authorization': f'Bearer {token}'},
+            params={'language': 'en', 'format': 'json'}
+        )
+        return response.json()
 
     def _headers(self):
         return {'Authorization': f'Bearer {self.get_token()}'}
@@ -195,8 +214,103 @@ class FatSecretAPI:
             tasks = [loop.run_in_executor(executor, self.get_and_write_food, id) for id in ids]
             await asyncio.gather(*tasks)
 
+    def get_recipe_types(self):
+        api_url = "https://platform.fatsecret.com/rest/recipe-types/v2"
+        response = requests.get(api_url, headers=self._headers(), params={'language': 'en', 'format': 'json'})
+        recipe_types = response.json().get('recipe_types', {}).get('recipe_type', [])
+        return recipe_types
+
+    def search_recipes(self, input_):
+        all_recipes = []
+        api_url = "https://platform.fatsecret.com/rest/recipes/search/v3"
+        is_recipe = True
+        page = 0
+
+        while is_recipe:
+            try:
+                response = requests.get(api_url, headers=self._headers(), params={
+                    'search_expression': input_,
+                    'must_have_images': True,
+                    'page_number': page,
+                    'max_results': 50,
+                    'sort_by': 'oldest',
+                    'format': 'json',
+                })
+                recipes = response.json().get('recipes', {}).get('recipe', [])
+                is_error = response.json().get('error', None)
+                code = response.json().get('error', {}).get('code', 0)
+                # if the token is expired create new token
+                if code == 13:
+                    self.get_token()
+
+                if is_error:
+                    print(response.json())
+                    return {'is_resolved': False}
+                if recipes:
+                    all_recipes += recipes
+                    page += 1
+                else:
+                    is_recipe = False
+            except:
+                print("searching recipes failed")
+
+        return {'is_resolved': True, 'data': all_recipes}
+
+    def get_and_write_general_recipe_details(self):
+
+        foods = self.read_file("food_details/foods.jsonl")
+        food_names = []
+        # get only food name that is 'Generic' by id
+        for food in foods:
+            food_type = food.get('food_type', '')
+            food_name = food.get('food_name', '')
+            if food_type == 'Generic' and food_name:
+                food_names.append(food_name)
+
+        ids = []
+        for name in food_names:
+            is_resolved = False
+            while is_resolved == False:
+                print("we are at: ", name)
+                recipes_response = self.search_recipes(name)
+                if recipes_response.get('is_resolved') == True:
+                    is_resolved = True
+                else:
+                    time.sleep(120)
+                    continue
+
+                recipes = recipes_response.get('data')
+
+                print("we have recipes: ", len(recipes))
+                if len(recipes):
+                    print("first recipe: ", recipes[0])
+                else:
+                    print("we dont have recipes !!!!! ")
+                recipes_to_store = []
+                for recipe in recipes:
+                    recipe_id = recipe.get('recipe_id', None)
+
+                    # if the id is already in variable, skip the step
+                    if recipe_id in ids:
+                        continue
+
+                    recipes_to_store.append(recipe)
+                    ids.append(recipe_id)
+
+            # store uinque recipes in file for each food name
+            if len(recipes_to_store):
+                self.write_jsonl_file(recipes_to_store, "food_details/general_details_recipes.jsonl")
+
 
 # api = FatSecretAPI()
+
+
+# !! Get recepies steps
+
+# Get recipes general details (Step 1)
+# api.get_and_write_general_recipe_details()
+
+# !! Get foods steps
 
 # Get categories (Step 1)
 # api.get_and_write_categories()
