@@ -115,12 +115,23 @@ class Meilisearch:
         """
         return Meilisearch._client.index(index).delete()
 
-    def search(self, input: str):
+    def search_food(self, input: str):
         """
         Searches the Meilisearch index for documents matching the input string.
         Returns the list of matching documents ('hits').
         """
         result_search = Meilisearch._client.index(get_settings().meilisearch_food_index).search(input)
+        return result_search.get('hits')
+
+    def search_recipe(self, input: str, filter_data: dict | None = None):
+        """
+        Searches the Meilisearch index for documents matching the input string and filter_data.
+        Returns the list of matching documents ('hits').
+        """
+        if filter_data:
+            result_search = Meilisearch._client.index(get_settings().meilisearch_recipe_index).search(input, filter_data)
+        else:
+            result_search = Meilisearch._client.index(get_settings().meilisearch_recipe_index).search(input)
         return result_search.get('hits')
 
     def get_indexes(self):
@@ -146,5 +157,5 @@ class Meilisearch:
 
 # python -m providers.meilisearch_client
 
-# result = Meilisearch().search("Apple")
+# result = Meilisearch().search_food("Apple")
 # print(result)

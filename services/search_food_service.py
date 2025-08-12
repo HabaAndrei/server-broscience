@@ -93,7 +93,7 @@ class SearchFood():
     def search(self, input):
         final_results = []
         try:
-            result_search = self.meilisearch_client.search(input)
+            result_search = self.meilisearch_client.search_food(input)
             for result in result_search:
                 id = result.get('id')
                 food = SearchFood._food.get(id)
