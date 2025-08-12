@@ -1,6 +1,7 @@
 from providers.meilisearch_client import Meilisearch
 import json
 import time
+from utils.diverse import to_integer, is_number
 
 # singleton
 class SearchFood():
@@ -31,35 +32,6 @@ class SearchFood():
         """Convert ounces (oz) to grams (g)."""
         GRAMS_PER_OUNCE = 28.3495
         return oz * GRAMS_PER_OUNCE
-
-    def is_number(self, value):
-        """
-        Check if the value is an int, float, or numeric string.
-        Returns True if it's numeric, otherwise False.
-        """
-        if isinstance(value, (int, float)):
-            return True
-
-        if isinstance(value, str):
-            try:
-                float(value)  # If it can be converted to float, it's numeric
-                return True
-            except ValueError:
-                return False
-
-        return False
-
-
-    def to_integer(self, value):
-        """
-        Convert a float, int, or numeric string to an integer.
-        If value is float, it will be truncated (not rounded).
-        Raises ValueError if the input is not numeric.
-        """
-        if not self.is_number(value):
-            raise ValueError("Input must be a number or numeric string.")
-
-        return int(float(value))
 
 
     def transform_metric_serving_unit_to_grams(self, food: dict) -> dict:
@@ -103,14 +75,14 @@ class SearchFood():
             values = [calories, carbohydrate, fat, metric_serving_amount, protein]
             for value in values:
                 # if is not a number we return false
-                if self.is_number(value) != True:
+                if is_number(value) != True:
                     return {'is_resolved': False}
             # make the value an integer
-            serving['calories'] = self.to_integer(calories)
-            serving['carbohydrate'] = self.to_integer(carbohydrate)
-            serving['fat'] = self.to_integer(fat)
-            serving['metric_serving_amount'] = self.to_integer(metric_serving_amount)
-            serving['protein'] = self.to_integer(protein)
+            serving['calories'] = to_integer(calories)
+            serving['carbohydrate'] = to_integer(carbohydrate)
+            serving['fat'] = to_integer(fat)
+            serving['metric_serving_amount'] = to_integer(metric_serving_amount)
+            serving['protein'] = to_integer(protein)
             # return the food
             return {'is_resolved': True, 'data': food}
         except Exception as e:
