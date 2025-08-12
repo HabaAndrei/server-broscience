@@ -302,13 +302,45 @@ class FatSecretAPI:
                 self.write_jsonl_file(recipes_to_store, "food_details/general_details_recipes.jsonl")
 
 
-# api = FatSecretAPI()
+    def get_recipe_by_id(self, id):
+        return self.get_food({
+            'method': 'recipe.get.v2',
+            'recipe_id': id,
+            'format': 'json',
+            'language': 'en',
+        })
+
+    def get_and_write_recipe(self, id):
+        print('start to get, for id: ', id)
+        recipe_result = self.get_recipe_by_id(id)
+        details = recipe_result.get('recipe', None)
+        if details:
+            self.write_jsonl_file([details], "food_details/recipes.jsonl")
+        else:
+            print(recipe_result, ' <<== error')
+
+    async def get_and_write_detailed_recipes(self):
+        ids = []
+        recipes = self.read_file("food_details/general_details_recipes.jsonl")
+        for recipe in recipes:
+            ids.append(recipe.get('recipe_id'))
+
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor(5) as executor:
+            tasks = [loop.run_in_executor(executor, self.get_and_write_recipe, id) for id in ids]
+            await asyncio.gather(*tasks)
+
+
+api = FatSecretAPI()
 
 
 # !! Get recepies steps
 
 # Get recipes general details (Step 1)
 # api.get_and_write_general_recipe_details()
+
+# Get detailed recipes (Step 2)
+# asyncio.run(api.get_and_write_detailed_recipes())
 
 # !! Get foods steps
 
