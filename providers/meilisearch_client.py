@@ -29,9 +29,9 @@ class Meilisearch:
         Reads food names from a jsonl file ('food.jsonl') and stores them in a Meilisearch index.
         If the index already exists, it deletes the existing one first to avoid duplication.
         """
-        if self.exists_index(get_settings().meilisearch_index):
+        if self.exists_index(get_settings().meilisearch_food_index):
             print('Index exists, deleting it first.')
-            self.delete_index(get_settings().meilisearch_index)
+            self.delete_index(get_settings().meilisearch_food_index)
 
         data_to_store = []
         rows = self.read_jsonl_file("food_details/foods.jsonl")
@@ -49,7 +49,7 @@ class Meilisearch:
                 continue
             data_to_store.append({'id': food_id, 'name': food_name})
         # Add the list of ingredients to the Meilisearch index
-        return Meilisearch._client.index(get_settings().meilisearch_index).add_documents(data_to_store)
+        return Meilisearch._client.index(get_settings().meilisearch_food_index).add_documents(data_to_store)
 
     def exists_index(self, index: str):
         """
@@ -74,7 +74,7 @@ class Meilisearch:
         Searches the Meilisearch index for documents matching the input string.
         Returns the list of matching documents ('hits').
         """
-        result_search = Meilisearch._client.index(get_settings().meilisearch_index).search(input)
+        result_search = Meilisearch._client.index(get_settings().meilisearch_food_index).search(input)
         return result_search.get('hits')
 
     def get_indexes(self):
