@@ -32,6 +32,8 @@ class SearchRecipe():
 
             if filter_data:
                 filter_data = MeilisearchQueryService(filter_data).create_query_search_recipe()
+
+            filter_data['limit'] = 30
             repsonse_search = self.meilisearch_client.search_recipe(input, filter_data)
 
             for recipe in repsonse_search:
@@ -51,14 +53,15 @@ class SearchRecipe():
 
 # python -m services.search_recipe_service
 
-# result = asyncio.run(SearchRecipe().search("apple",
+# result = asyncio.run(SearchRecipe().search("",
 #     {
 #         'carbohydrate': {
-#             'minValue': 40
+#             'minValue': 0
 #         },
 #         'protein': {
-#             'maxValue': 20
+#             'maxValue': 1000
 #         }
 #     }
 # ))
-# print(result)
+# result = result.get('data')
+# print(len(result))

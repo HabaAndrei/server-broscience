@@ -116,5 +116,6 @@ class SearchFood():
 
 # print(time.time())
 # result = asyncio.run(SearchFood().search("apple"))
+# result = result.get('data')
 # print(len(result))
 # print(time.time())
