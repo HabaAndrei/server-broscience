@@ -1,11 +1,11 @@
 import json
 from providers.meilisearch_client import Meilisearch
+from services.meilisearch_query_service import MeilisearchQueryService
 
 # singleton
 class SearchRecipe():
 
     _instance = None
-    _choices = []
     _recipes  = {}
     meilisearch_client = None
 
@@ -26,16 +26,38 @@ class SearchRecipe():
         self.meilisearch_client = Meilisearch()
 
     def search(self, input, filter_data=None):
-        repsonse_search = self.meilisearch_client.search_recipe(input, filter_data)
-        print(repsonse_search)
+        final_results = []
+        try:
+
+            if filter_data:
+                filter_data = MeilisearchQueryService(filter_data).create_query_search_recipe()
+            repsonse_search = self.meilisearch_client.search_recipe(input, filter_data)
+
+            for recipe in repsonse_search:
+                id = recipe.get('id', None)
+                if id == None:
+                    continue
+                detailed_recipe = self._recipes[id]
+                if detailed_recipe:
+                    final_results.append(detailed_recipe)
+
+            return {'is_resolved': True, 'data': final_results}
+        except Exception as e:
+            print(e)
+            return {'is_resolved': False, 'err': str(e)}
 
 
-# 'id': '53915679', 'name': 'Apple Pumpkin Muffins', 'recipe_description': 'Vegan baked goods, perfect as grab-and-go breakfast.', 'carbohydrate': 40, 'fat': 2, 'protein': 4, 'calories': 200
 
 # python -m services.search_recipe_service
 
-result = SearchRecipe().search("apple", {
-#   'filter': 'carbohydrate >= 40 AND protein = 14'
-})
-
-print(result)
+# result = SearchRecipe().search("apple",
+#     {
+#         'carbohydrate': {
+#             'minValue': 40
+#         },
+#         'protein': {
+#             'maxValue': 20
+#         }
+#     }
+# )
+# print(result)
