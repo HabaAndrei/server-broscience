@@ -2,6 +2,7 @@ from providers.meilisearch_client import Meilisearch
 import json
 import time
 from utils.diverse import to_integer, is_number
+import asyncio
 
 # singleton
 class SearchFood():
@@ -90,7 +91,7 @@ class SearchFood():
             return {'is_resolved': False, 'err': str(e)}
 
 
-    def search(self, input):
+    async def search(self, input):
         final_results = []
         try:
             result_search = self.meilisearch_client.search_food(input)
@@ -114,6 +115,6 @@ class SearchFood():
 # python -m services.search_food_service
 
 # print(time.time())
-# result = SearchFood().search("apple")
+# result = asyncio.run(SearchFood().search("apple"))
 # print(len(result))
 # print(time.time())

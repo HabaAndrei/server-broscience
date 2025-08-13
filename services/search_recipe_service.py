@@ -1,6 +1,7 @@
 import json
 from providers.meilisearch_client import Meilisearch
 from services.meilisearch_query_service import MeilisearchQueryService
+import asyncio
 
 # singleton
 class SearchRecipe():
@@ -25,7 +26,7 @@ class SearchRecipe():
     def __init__(self):
         self.meilisearch_client = Meilisearch()
 
-    def search(self, input, filter_data=None):
+    async def search(self, input, filter_data=None):
         final_results = []
         try:
 
@@ -50,7 +51,7 @@ class SearchRecipe():
 
 # python -m services.search_recipe_service
 
-# result = SearchRecipe().search("apple",
+# result = asyncio.run(SearchRecipe().search("apple",
 #     {
 #         'carbohydrate': {
 #             'minValue': 40
@@ -59,5 +60,5 @@ class SearchRecipe():
 #             'maxValue': 20
 #         }
 #     }
-# )
+# ))
 # print(result)
