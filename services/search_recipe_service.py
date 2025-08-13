@@ -26,7 +26,7 @@ class SearchRecipe():
     def __init__(self):
         self.meilisearch_client = Meilisearch()
 
-    async def search(self, input, filter_data=None):
+    async def search(self, input, filter_data={}):
         final_results = []
         try:
 
@@ -54,14 +54,14 @@ class SearchRecipe():
 # python -m services.search_recipe_service
 
 # result = asyncio.run(SearchRecipe().search("",
-#     {
-#         'carbohydrate': {
-#             'minValue': 0
-#         },
-#         'protein': {
-#             'maxValue': 1000
-#         }
-#     }
+    # {
+    #     'carbohydrate': {
+    #         'minValue': 0
+    #     },
+    #     'protein': {
+    #         'maxValue': 1000
+    #     }
+    # }
 # ))
 # result = result.get('data')
 # print(len(result))

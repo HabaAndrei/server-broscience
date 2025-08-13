@@ -128,10 +128,7 @@ class Meilisearch:
         Searches the Meilisearch index for documents matching the input string and filter_data.
         Returns the list of matching documents ('hits').
         """
-        if filter_data:
-            result_search = Meilisearch._client.index(get_settings().meilisearch_recipe_index).search(input, filter_data)
-        else:
-            result_search = Meilisearch._client.index(get_settings().meilisearch_recipe_index).search(input, {'limit': 30})
+        result_search = Meilisearch._client.index(get_settings().meilisearch_recipe_index).search(input, filter_data)
         return result_search.get('hits')
 
     def get_indexes(self):
