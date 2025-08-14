@@ -26,6 +26,15 @@ class SearchRecipe():
     def __init__(self):
         self.meilisearch_client = Meilisearch()
 
+    async def get_recipe_by_id(self, recipe_id):
+        try:
+            recipe = self._recipes[recipe_id]
+            if recipe:
+                return {'is_resolved': True, 'data': recipe}
+            return {'is_resolved': False, 'err': 'We did not find your recipe'}
+        except Exception as e:
+            print(e)
+            return {'is_resolved': False, 'err': str(e)}
     async def search(self, input, filter_data={}):
         final_results = []
         try:

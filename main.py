@@ -50,3 +50,7 @@ async def search_food(input: str):
 async def search_recipe(input: str, query: str = Query(...)):
     query_dict = json.loads(query)
     return await search_recipe_instance.search(input, query_dict)
+
+@app.get("/search-recipe/{recipe_id}")
+async def search_recipe(recipe_id: str):
+    return await search_recipe_instance.get_recipe_by_id(recipe_id)
