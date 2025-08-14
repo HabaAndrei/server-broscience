@@ -35,14 +35,13 @@ class SearchRecipe():
         except Exception as e:
             print(e)
             return {'is_resolved': False, 'err': str(e)}
-    async def search(self, input, filter_data={}):
+    async def search(self, input, filter_data={}, pagination_data={}):
         final_results = []
         try:
 
             if filter_data:
-                filter_data = MeilisearchQueryService(filter_data).create_query_search_recipe()
+                filter_data = MeilisearchQueryService(filter_data, pagination_data).create_query_search_recipe()
 
-            filter_data['limit'] = 30
             repsonse_search = self.meilisearch_client.search_recipe(input, filter_data)
 
             for recipe in repsonse_search:
