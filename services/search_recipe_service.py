@@ -1,0 +1,76 @@
+import json
+from providers.meilisearch_client import Meilisearch
+from services.meilisearch_query_service import MeilisearchQueryService
+import asyncio
+
+# singleton
+class SearchRecipe():
+
+    _instance = None
+    _recipes  = {}
+    meilisearch_client = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            # load values from csv just once
+            cls._instance = super(SearchRecipe, cls).__new__(cls)
+            rows = []
+            with open("food_details/recipes.jsonl", 'r', encoding='utf-8') as f:
+                rows = [json.loads(line) for line in f]
+            for row in rows:
+                recipe_id = row.get('recipe_id')
+                cls._recipes[recipe_id] = row
+
+        return cls._instance
+
+    def __init__(self):
+        self.meilisearch_client = Meilisearch()
+
+    async def get_recipe_by_id(self, recipe_id):
+        try:
+            recipe = self._recipes[recipe_id]
+            if recipe:
+                return {'is_resolved': True, 'data': recipe}
+            return {'is_resolved': False, 'err': 'We did not find your recipe'}
+        except Exception as e:
+            print(e)
+            return {'is_resolved': False, 'err': str(e)}
+    async def search(self, input, filter_dict={}, pagination_dict={}):
+        final_results = []
+        query = filter_dict
+        try:
+
+            if filter_dict:
+                query = MeilisearchQueryService(filter_dict, pagination_dict).create_query_search_recipe()
+
+            repsonse_search = self.meilisearch_client.search_recipe(input, query)
+
+            for recipe in repsonse_search:
+                id = recipe.get('id', None)
+                if id == None:
+                    continue
+                detailed_recipe = self._recipes[id]
+                if detailed_recipe:
+                    final_results.append(detailed_recipe)
+
+            return {'is_resolved': True, 'data': final_results}
+        except Exception as e:
+            print(e)
+            return {'is_resolved': False, 'err': str(e)}
+
+
+
+# python -m services.search_recipe_service
+
+# result = asyncio.run(SearchRecipe().search("",
+    # {
+    #     'carbohydrate': {
+    #         'minValue': 0
+    #     },
+    #     'protein': {
+    #         'maxValue': 1000
+    #     }
+    # }
+# ))
+# result = result.get('data')
+# print(len(result))

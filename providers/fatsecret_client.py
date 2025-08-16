@@ -331,8 +331,7 @@ class FatSecretAPI:
             await asyncio.gather(*tasks)
 
 
-api = FatSecretAPI()
-
+# api = FatSecretAPI()
 
 # !! Get recepies steps
 

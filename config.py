@@ -7,7 +7,8 @@ class Settings(BaseSettings):
     openai_api_key: str
     meilisearch_url: str
     meilisearch_password: str
-    meilisearch_index: str = "ingredients"
+    meilisearch_food_index: str = "food"
+    meilisearch_recipe_index: str = "recipe"
     model_structure_outputs: str = "gpt-4o-mini"
 
     # Google Service Account from Firebase

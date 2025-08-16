@@ -14,6 +14,13 @@ class NutritionRequest(BaseModel):
 class AnalyzeImageRequest(BaseModel):
     image: str
 
+class SearchFoodRequest(BaseModel):
+    input: str
+
+class SearchRecipeRequest(BaseModel):
+    input: str
+    query: dict
+
 
 class Ingredient(BaseModel):
     name: str = Field(description="Always start with an uppercase letter.")

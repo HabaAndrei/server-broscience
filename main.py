@@ -1,14 +1,16 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from generators import fitness_guide, food_analyzer
 from fastapi.middleware.cors import CORSMiddleware
 from providers.schemas import NutritionRequest, AnalyzeImageRequest
 from providers.fatsecret_client import FatSecretAPI
-from services import search_food_service
+from services import search_food_service, search_recipe_service
+import json
 
 app = FastAPI()
 fitness_guide = fitness_guide.FitnessGuide()
 food_analyzer = food_analyzer.FoodAnalyzer()
 search_food_instance = search_food_service.SearchFood()
+search_recipe_instance = search_recipe_service.SearchRecipe()
 fat_secret_client = FatSecretAPI()
 
 
@@ -42,4 +44,14 @@ async def analyze_image(data: AnalyzeImageRequest):
 
 @app.get("/search-food")
 async def search_food(input: str):
-    return search_food_instance.search(input)
+    return await search_food_instance.search(input)
+
+@app.get("/search-recipe")
+async def search_recipe(input: str, filter: str = Query(...), pagination: str = Query(...)):
+    filter_dict = json.loads(filter)
+    pagination_dict = json.loads(pagination)
+    return await search_recipe_instance.search(input, filter_dict, pagination_dict)
+
+@app.get("/search-recipe/{recipe_id}")
+async def search_recipe(recipe_id: str):
+    return await search_recipe_instance.get_recipe_by_id(recipe_id)
