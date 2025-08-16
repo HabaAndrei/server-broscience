@@ -5,12 +5,12 @@ class MeilisearchQueryService:
         "max_value": "<="
     }
     accepted_keys_recipe = ['calories', 'carbohydrate', 'fat', 'protein']
-    query_details = {}
-    pagination_details = {}
+    filter_dict = {}
+    pagination_dict = {}
 
-    def __init__(self, query_details: dict, pagination_details: dict = {}):
-        self.query_details = query_details
-        self.pagination_details = pagination_details
+    def __init__(self, filter_dict: dict, pagination_dict: dict = {}):
+        self.filter_dict = filter_dict
+        self.pagination_dict = pagination_dict
 
     def add_to_created_query(self, value: str | int | float, type: str, column: str):
         operator = self.operators[type]
@@ -23,11 +23,11 @@ class MeilisearchQueryService:
 
 
     def create_query_search_recipe(self):
-        query_details = self.query_details
+        filter_dict = self.filter_dict
         final_result = {}
 
-        for key in query_details:
-            details = query_details.get(key, '')
+        for key in filter_dict:
+            details = filter_dict.get(key, '')
             min_value = details.get("minValue", None)
             max_value = details.get("maxValue", None)
             if key not in self.accepted_keys_recipe:
@@ -38,9 +38,9 @@ class MeilisearchQueryService:
                 self.add_to_created_query(max_value, "max_value", key)
 
 
-        if self.pagination_details:
-            for key in self.pagination_details:
-                final_result[key] = self.pagination_details[key]
+        if self.pagination_dict:
+            for key in self.pagination_dict:
+                final_result[key] = self.pagination_dict[key]
 
         final_result['filter'] = self.constructed_filter
         return final_result
@@ -48,7 +48,7 @@ class MeilisearchQueryService:
 
 
 # Query example
-# query = {
+# filter_dict = {
 #     "calories": {
 #         "minValue": "10",
 #         "maxValue": '100'
@@ -63,11 +63,11 @@ class MeilisearchQueryService:
 #     },
 # }
 
-# pagination = {
+# pagination_dict = {
 #     'limit': 10,
 #     'offset': 10
 # }
 
 # How to call the class
-# a = MeilisearchQueryService(query, pagination).create_query_search_recipe()
+# a = MeilisearchQueryService(filter_dict, pagination_dict).create_query_search_recipe()
 # print(a)

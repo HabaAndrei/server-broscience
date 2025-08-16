@@ -47,10 +47,10 @@ async def search_food(input: str):
     return await search_food_instance.search(input)
 
 @app.get("/search-recipe")
-async def search_recipe(input: str, query: str = Query(...), pagination: str = Query(...)):
-    query_dict = json.loads(query)
+async def search_recipe(input: str, filter: str = Query(...), pagination: str = Query(...)):
+    filter_dict = json.loads(filter)
     pagination_dict = json.loads(pagination)
-    return await search_recipe_instance.search(input, query_dict, pagination_dict)
+    return await search_recipe_instance.search(input, filter_dict, pagination_dict)
 
 @app.get("/search-recipe/{recipe_id}")
 async def search_recipe(recipe_id: str):

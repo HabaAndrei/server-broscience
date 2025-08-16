@@ -123,12 +123,12 @@ class Meilisearch:
         result_search = Meilisearch._client.index(get_settings().meilisearch_food_index).search(input)
         return result_search.get('hits')
 
-    def search_recipe(self, input: str, filter_data: dict | None = None):
+    def search_recipe(self, input: str, query: dict | None = None):
         """
         Searches the Meilisearch index for documents matching the input string and filter_data.
         Returns the list of matching documents ('hits').
         """
-        result_search = Meilisearch._client.index(get_settings().meilisearch_recipe_index).search(input, filter_data)
+        result_search = Meilisearch._client.index(get_settings().meilisearch_recipe_index).search(input, query)
         return result_search.get('hits')
 
     def get_indexes(self):
