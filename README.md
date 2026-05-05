@@ -2,7 +2,7 @@
 
 FastAPI backend for the **Broscience** fitness & nutrition app. It powers AI‑assisted food image analysis, personalised nutrition plan generation, and high‑speed food/recipe search.
 
-> This repository is the API. The mobile client lives in [`expo-broscience`](../expo-broscience) and points at this server via `EXPO_PUBLIC_SERVER_ADDRESS`.
+> This repository is the API. The mobile client lives in [`expo-broscience`](https://github.com/HabaAndrei/expo-broscience) and points at this server via `EXPO_PUBLIC_SERVER_ADDRESS`.
 
 ---
 
